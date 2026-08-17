@@ -52,6 +52,17 @@ jobs:
         working-directory: infra/terraform
         run: terraform init
 
+      - name: Preserve CloudFront API origin
+        if: steps.filter.outputs.infra == 'true'
+        run: |
+          DIST_ID=$(terraform -chdir=infra/terraform output -raw cloudfront_distribution_id)
+          API_ORIGIN=$(aws cloudfront get-distribution --id "$DIST_ID" \
+            --query "Distribution.DistributionConfig.Origins.Items[?Id=='api'].DomainName | [0]" \
+            --output text)
+          if [[ -n "$API_ORIGIN" && "$API_ORIGIN" != "None" ]]; then
+            echo "api_origin_domain = \"${API_ORIGIN}\"" > infra/terraform/api.auto.tfvars
+          fi
+
       - name: Terraform apply
         if: steps.filter.outputs.infra == 'true'
         working-directory: infra/terraform
