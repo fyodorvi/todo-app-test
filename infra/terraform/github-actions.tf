@@ -6,9 +6,8 @@ resource "aws_iam_user" "github_actions" {
   }
 }
 
-resource "aws_iam_user_policy" "github_actions" {
+resource "aws_iam_policy" "github_actions" {
   name = "${local.name}-github-actions-deploy"
-  user = aws_iam_user.github_actions.name
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -138,6 +137,11 @@ resource "aws_iam_user_policy" "github_actions" {
       }
     ]
   })
+}
+
+resource "aws_iam_user_policy_attachment" "github_actions" {
+  user       = aws_iam_user.github_actions.name
+  policy_arn = aws_iam_policy.github_actions.arn
 }
 
 resource "aws_iam_access_key" "github_actions" {
