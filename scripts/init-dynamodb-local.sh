@@ -30,7 +30,29 @@ if aws dynamodb describe-table \
   --table-name "${TABLE_NAME}" \
   --region "${AWS_REGION}" \
   --endpoint-url "${ENDPOINT}" >/dev/null 2>&1; then
-  echo "Table already exists: ${TABLE_NAME}"
+  INDEX_NAMES=$(aws dynamodb describe-table \
+    --table-name "${TABLE_NAME}" \
+    --region "${AWS_REGION}" \
+    --endpoint-url "${ENDPOINT}" \
+    --query "Table.GlobalSecondaryIndexes[].IndexName" \
+    --output text 2>/dev/null || true)
+
+  if [[ "${INDEX_NAMES}" != *tenant-date-index* ]]; then
+    echo "Adding missing GSI tenant-date-index to ${TABLE_NAME}..."
+    aws dynamodb update-table \
+      --table-name "${TABLE_NAME}" \
+      --attribute-definitions \
+        AttributeName=id,AttributeType=S \
+        AttributeName=date,AttributeType=S \
+        AttributeName=tenantId,AttributeType=S \
+        AttributeName=tenantDateKey,AttributeType=S \
+      --global-secondary-index-updates \
+        "[{\"Create\":{\"IndexName\":\"tenant-date-index\",\"KeySchema\":[{\"AttributeName\":\"tenantId\",\"KeyType\":\"HASH\"},{\"AttributeName\":\"tenantDateKey\",\"KeyType\":\"RANGE\"}],\"Projection\":{\"ProjectionType\":\"ALL\"}}}]" \
+      --region "${AWS_REGION}" \
+      --endpoint-url "${ENDPOINT}"
+  fi
+
+  echo "Table ready: ${TABLE_NAME}"
   exit 0
 fi
 
@@ -40,10 +62,12 @@ aws dynamodb create-table \
   --attribute-definitions \
     AttributeName=id,AttributeType=S \
     AttributeName=date,AttributeType=S \
+    AttributeName=tenantId,AttributeType=S \
+    AttributeName=tenantDateKey,AttributeType=S \
   --key-schema AttributeName=id,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST \
   --global-secondary-indexes \
-    "[{\"IndexName\":\"date-index\",\"KeySchema\":[{\"AttributeName\":\"date\",\"KeyType\":\"HASH\"},{\"AttributeName\":\"id\",\"KeyType\":\"RANGE\"}],\"Projection\":{\"ProjectionType\":\"ALL\"}}]" \
+    "[{\"IndexName\":\"date-index\",\"KeySchema\":[{\"AttributeName\":\"date\",\"KeyType\":\"HASH\"},{\"AttributeName\":\"id\",\"KeyType\":\"RANGE\"}],\"Projection\":{\"ProjectionType\":\"ALL\"}},{\"IndexName\":\"tenant-date-index\",\"KeySchema\":[{\"AttributeName\":\"tenantId\",\"KeyType\":\"HASH\"},{\"AttributeName\":\"tenantDateKey\",\"KeyType\":\"RANGE\"}],\"Projection\":{\"ProjectionType\":\"ALL\"}}]" \
   --region "${AWS_REGION}" \
   --endpoint-url "${ENDPOINT}"
 

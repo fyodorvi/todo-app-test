@@ -28,10 +28,19 @@ else
   exit 1
 fi
 
+if [[ -z "${VITE_AUTH0_DOMAIN:-}" || -z "${VITE_AUTH0_CLIENT_ID:-}" || -z "${VITE_AUTH0_AUDIENCE:-}" ]]; then
+  echo "Error: VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID, and VITE_AUTH0_AUDIENCE must be set."
+  exit 1
+fi
+
 echo "Building frontend with VITE_API_URL=${API_URL}"
 cd "${FRONTEND_DIR}"
 npm install
-VITE_API_URL="${API_URL}" npm run build
+VITE_API_URL="${API_URL}" \
+VITE_AUTH0_DOMAIN="${VITE_AUTH0_DOMAIN}" \
+VITE_AUTH0_CLIENT_ID="${VITE_AUTH0_CLIENT_ID}" \
+VITE_AUTH0_AUDIENCE="${VITE_AUTH0_AUDIENCE}" \
+npm run build
 
 echo "Syncing to S3 bucket: ${S3_BUCKET}"
 aws s3 sync dist/ "s3://${S3_BUCKET}" --delete --region "${AWS_REGION}"

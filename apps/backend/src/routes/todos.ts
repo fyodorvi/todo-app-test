@@ -10,8 +10,22 @@ import { isValidDate, validateCreateInput, validateUpdateInput } from "../types/
 
 const router = Router();
 
+function requireTenantId(req: import("express").Request, res: import("express").Response): string | null {
+  const tenantId = req.tenantId;
+  if (typeof tenantId !== "string") {
+    res.status(401).json({ error: "Unauthorized" });
+    return null;
+  }
+  return tenantId;
+}
+
 router.get("/", async (req, res) => {
   try {
+    const tenantId = requireTenantId(req, res);
+    if (!tenantId) {
+      return;
+    }
+
     const { date } = req.query;
 
     if (date !== undefined) {
@@ -19,11 +33,11 @@ router.get("/", async (req, res) => {
         res.status(400).json({ error: "date query must be YYYY-MM-DD" });
         return;
       }
-      res.json(await listTodos(date));
+      res.json(await listTodos(tenantId, date));
       return;
     }
 
-    res.json(await listTodos());
+    res.json(await listTodos(tenantId));
   } catch (err) {
     console.error("Failed to list todos:", err);
     res.status(500).json({ error: "Failed to list todos" });
@@ -32,7 +46,12 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const todo = await getTodo(req.params.id);
+    const tenantId = requireTenantId(req, res);
+    if (!tenantId) {
+      return;
+    }
+
+    const todo = await getTodo(tenantId, req.params.id);
     if (!todo) {
       res.status(404).json({ error: "Todo not found" });
       return;
@@ -46,13 +65,18 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
+    const tenantId = requireTenantId(req, res);
+    if (!tenantId) {
+      return;
+    }
+
     const result = validateCreateInput(req.body);
     if (!result.ok) {
       res.status(400).json({ error: result.error });
       return;
     }
 
-    const todo = await createTodo(result.data);
+    const todo = await createTodo(tenantId, result.data);
     res.status(201).json(todo);
   } catch (err) {
     console.error("Failed to create todo:", err);
@@ -62,13 +86,18 @@ router.post("/", async (req, res) => {
 
 router.patch("/:id", async (req, res) => {
   try {
+    const tenantId = requireTenantId(req, res);
+    if (!tenantId) {
+      return;
+    }
+
     const result = validateUpdateInput(req.body);
     if (!result.ok) {
       res.status(400).json({ error: result.error });
       return;
     }
 
-    const todo = await updateTodo(req.params.id, result.data);
+    const todo = await updateTodo(tenantId, req.params.id, result.data);
     if (!todo) {
       res.status(404).json({ error: "Todo not found" });
       return;
@@ -83,7 +112,12 @@ router.patch("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    const deleted = await deleteTodo(req.params.id);
+    const tenantId = requireTenantId(req, res);
+    if (!tenantId) {
+      return;
+    }
+
+    const deleted = await deleteTodo(tenantId, req.params.id);
     if (!deleted) {
       res.status(404).json({ error: "Todo not found" });
       return;

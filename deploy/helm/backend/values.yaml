@@ -13,6 +13,10 @@ aws:
 dynamodb:
   tableName: rush-webapp-todos
 
+auth0:
+  domain: ""
+  audience: ""
+
 serviceAccount:
   create: true
   name: backend

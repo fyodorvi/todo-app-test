@@ -20,14 +20,7 @@ local-dynamo:
 	AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_EC2_METADATA_DISABLED=true ./scripts/init-dynamodb-local.sh
 
 local-backend: local-dynamo
-	cd apps/backend && npm install && \
-		AWS_ACCESS_KEY_ID=local \
-		AWS_SECRET_ACCESS_KEY=local \
-		AWS_EC2_METADATA_DISABLED=true \
-		DYNAMODB_TABLE_NAME=rush-webapp-todos \
-		DYNAMODB_ENDPOINT=http://localhost:8000 \
-		AWS_REGION=ap-southeast-2 \
-		npm run dev
+	cd apps/backend && npm install && npm run dev
 
 local-frontend:
-	cd apps/frontend && npm install && VITE_API_URL=http://localhost:3000 npm run dev
+	cd apps/frontend && npm install && npm run dev

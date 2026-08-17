@@ -1,3 +1,49 @@
+type TodosApiConfig = {
+  getAccessToken: () => Promise<string>;
+  onUnauthorized?: () => void;
+};
+
+let apiConfig: TodosApiConfig | null = null;
+
+export function configureTodosApi(config: TodosApiConfig): void {
+  apiConfig = config;
+}
+
+function getApiUrl(): string {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (!apiUrl) {
+    throw new Error("VITE_API_URL is not set");
+  }
+  return apiUrl;
+}
+
+async function authHeaders(): Promise<HeadersInit> {
+  if (!apiConfig) {
+    throw new Error("Todos API is not configured");
+  }
+
+  const token = await apiConfig.getAccessToken();
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+async function handleResponse<T>(res: Response): Promise<T> {
+  if (res.status === 401) {
+    apiConfig?.onUnauthorized?.();
+    throw new Error("Unauthorized");
+  }
+
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? `HTTP ${res.status}`);
+  }
+  if (res.status === 204) {
+    return undefined as T;
+  }
+  return res.json() as Promise<T>;
+}
+
 export type TodoState = "todo" | "scheduled" | "done";
 
 export interface TodoLocation {
@@ -24,34 +70,20 @@ export interface CreateTodoInput {
 
 export type UpdateTodoInput = Partial<CreateTodoInput>;
 
-function getApiUrl(): string {
-  const apiUrl = import.meta.env.VITE_API_URL;
-  if (!apiUrl) {
-    throw new Error("VITE_API_URL is not set");
-  }
-  return apiUrl;
-}
-
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(body?.error ?? `HTTP ${res.status}`);
-  }
-  if (res.status === 204) {
-    return undefined as T;
-  }
-  return res.json() as Promise<T>;
-}
-
 export async function getAllTodos(): Promise<Todo[]> {
-  const res = await fetch(`${getApiUrl()}/api/todos`);
+  const res = await fetch(`${getApiUrl()}/api/todos`, {
+    headers: await authHeaders(),
+  });
   return handleResponse<Todo[]>(res);
 }
 
 export async function createTodo(data: CreateTodoInput): Promise<Todo> {
   const res = await fetch(`${getApiUrl()}/api/todos`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(await authHeaders()),
+    },
     body: JSON.stringify(data),
   });
   return handleResponse<Todo>(res);
@@ -60,7 +92,10 @@ export async function createTodo(data: CreateTodoInput): Promise<Todo> {
 export async function updateTodo(id: string, data: UpdateTodoInput): Promise<Todo> {
   const res = await fetch(`${getApiUrl()}/api/todos/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(await authHeaders()),
+    },
     body: JSON.stringify(data),
   });
   return handleResponse<Todo>(res);
@@ -69,6 +104,7 @@ export async function updateTodo(id: string, data: UpdateTodoInput): Promise<Tod
 export async function deleteTodo(id: string): Promise<void> {
   const res = await fetch(`${getApiUrl()}/api/todos/${id}`, {
     method: "DELETE",
+    headers: await authHeaders(),
   });
   await handleResponse<void>(res);
 }

@@ -30,6 +30,10 @@ spec:
               value: {{ .Values.dynamodb.tableName | quote }}
             - name: AWS_REGION
               value: {{ .Values.aws.region | quote }}
+            - name: AUTH0_DOMAIN
+              value: {{ .Values.auth0.domain | quote }}
+            - name: AUTH0_AUDIENCE
+              value: {{ .Values.auth0.audience | quote }}
           livenessProbe:
             httpGet:
               path: /health

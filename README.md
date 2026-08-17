@@ -41,7 +41,14 @@ After deployment, open the CloudFront URL printed by `make frontend`. You should
 
 ## Local development
 
-Run DynamoDB Local, backend, and frontend locally without AWS:
+Copy the example env files, then start the stack:
+
+```bash
+cp apps/backend/.env.local.example apps/backend/.env.local
+cp apps/frontend/.env.local.example apps/frontend/.env.local
+```
+
+Run DynamoDB Local, backend, and frontend locally:
 
 ```bash
 # Terminal 1 — DynamoDB Local + backend on http://localhost:3000
@@ -51,29 +58,30 @@ make local-backend
 make local-frontend
 ```
 
-`make local-backend` starts DynamoDB Local in Docker (data persisted in a Docker volume), creates the todos table if needed, then runs the Express API against `http://localhost:8000`.
+`make local-backend` starts DynamoDB Local in Docker (data persisted in a Docker volume), creates the todos table if needed, then runs the Express API. Auth uses your Auth0 tenant — sign in at `http://localhost:5173` after adding that URL to your Auth0 SPA app's callback, logout, and web-origin settings.
 
-To start DynamoDB Local only:
-
-```bash
-make local-dynamo
-```
-
-To reset local data:
+To reset local DynamoDB data:
 
 ```bash
 docker compose down -v
 ```
 
-Environment variables for local backend:
+### Auth0 setup (one SPA app for local + prod)
 
-| Variable | Value |
-|----------|-------|
-| `DYNAMODB_TABLE_NAME` | `rush-webapp-todos` |
-| `DYNAMODB_ENDPOINT` | `http://localhost:8000` |
-| `AWS_REGION` | `ap-southeast-2` |
+| Setting | Values |
+|---------|--------|
+| Allowed Callback URLs | `http://localhost:5173`, `https://<cloudfront-domain>` |
+| Allowed Logout URLs | same |
+| Allowed Web Origins | same |
 
-The frontend dev server calls `http://localhost:3000/api/todos`.
+Custom API audience: `https://api.garden-schedule` (not the Auth0 Management API).
+
+Local env files:
+
+- [`apps/frontend/.env.local.example`](apps/frontend/.env.local.example) — `VITE_AUTH0_*`, `VITE_API_URL`
+- [`apps/backend/.env.local.example`](apps/backend/.env.local.example) — `AUTH0_*`, DynamoDB vars
+
+Each user only sees their own todos (`tenantId` = Auth0 `sub`).
 
 To test the backend Docker image locally (requires a reachable DynamoDB table):
 
@@ -131,6 +139,11 @@ After the IAM deploy user is created (via local `terraform apply`), add two repo
 |-------------|-------|
 | `AWS_ACCESS_KEY_ID` | `terraform output github_actions_access_key_id` |
 | `AWS_SECRET_ACCESS_KEY` | `terraform output -raw github_actions_access_key_secret` |
+| `AUTH0_DOMAIN` | Auth0 tenant domain |
+| `AUTH0_AUDIENCE` | Custom API identifier (e.g. `https://api.garden-schedule`) |
+| `VITE_AUTH0_DOMAIN` | Same as `AUTH0_DOMAIN` |
+| `VITE_AUTH0_CLIENT_ID` | Auth0 SPA client ID |
+| `VITE_AUTH0_AUDIENCE` | Same as `AUTH0_AUDIENCE` |
 
 To retrieve keys locally:
 
