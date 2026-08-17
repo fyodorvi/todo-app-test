@@ -101,6 +101,10 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.7"
+
       - name: Deploy backend
         env:
           IMAGE_TAG: ${{ github.sha }}
