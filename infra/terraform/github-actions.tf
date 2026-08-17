@@ -32,12 +32,8 @@ resource "aws_iam_policy" "github_actions" {
       {
         Sid    = "EKS"
         Effect = "Allow"
-        Action = [
-          "eks:DescribeCluster",
-          "eks:ListClusters",
-          "eks:AccessKubernetesApi"
-        ]
-        Resource = module.eks.cluster_arn
+        Action = "eks:*"
+        Resource = "*"
       },
       {
         Sid    = "S3Frontend"
