@@ -1,0 +1,20 @@
+replicaCount: 1
+
+image:
+  repository: ""
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+cloudfrontUrl: ""
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
