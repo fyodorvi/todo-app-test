@@ -6,7 +6,8 @@ Minimal full-stack web app with React frontend (S3 + CloudFront) and Express bac
 
 - **Frontend**: React (Vite) → S3 → CloudFront (default `*.cloudfront.net` URL)
 - **Backend**: Express → Docker → ECR → Helm on EKS → AWS LoadBalancer
-- **Infra**: Terraform (VPC, EKS, ECR, S3, CloudFront) in `ap-southeast-2`
+- **Data**: DynamoDB (todos table; IRSA on EKS)
+- **Infra**: Terraform (VPC, EKS, ECR, S3, CloudFront, DynamoDB) in `ap-southeast-2`
 
 ## Prerequisites
 
@@ -40,25 +41,51 @@ After deployment, open the CloudFront URL printed by `make frontend`. You should
 
 ## Local development
 
-Run backend and frontend locally without AWS:
+Run DynamoDB Local, backend, and frontend locally without AWS:
 
 ```bash
-# Terminal 1 — backend on http://localhost:3000
+# Terminal 1 — DynamoDB Local + backend on http://localhost:3000
 make local-backend
 
 # Terminal 2 — frontend on http://localhost:5173
 make local-frontend
 ```
 
-The frontend dev server calls `http://localhost:3000/api/hello`.
+`make local-backend` starts DynamoDB Local in Docker (data persisted in a Docker volume), creates the todos table if needed, then runs the Express API against `http://localhost:8000`.
 
-To test the backend Docker image locally:
+To start DynamoDB Local only:
+
+```bash
+make local-dynamo
+```
+
+To reset local data:
+
+```bash
+docker compose down -v
+```
+
+Environment variables for local backend:
+
+| Variable | Value |
+|----------|-------|
+| `DYNAMODB_TABLE_NAME` | `rush-webapp-todos` |
+| `DYNAMODB_ENDPOINT` | `http://localhost:8000` |
+| `AWS_REGION` | `ap-southeast-2` |
+
+The frontend dev server calls `http://localhost:3000/api/todos`.
+
+To test the backend Docker image locally (requires a reachable DynamoDB table):
 
 ```bash
 cd apps/backend
 docker build -t backend-local .
-docker run -p 3000:3000 backend-local
-curl http://localhost:3000/api/hello
+docker run -p 3000:3000 \
+  -e DYNAMODB_TABLE_NAME=rush-webapp-todos \
+  -e DYNAMODB_ENDPOINT=http://host.docker.internal:8000 \
+  -e AWS_REGION=ap-southeast-2 \
+  backend-local
+curl http://localhost:3000/health
 ```
 
 ## Project structure

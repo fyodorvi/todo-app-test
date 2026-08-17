@@ -5,7 +5,7 @@ if [[ -z "${AWS_ACCESS_KEY_ID:-}" ]]; then
   if aws configure export-credentials --format env &>/dev/null; then
     eval "$(aws configure export-credentials --format env)"
   fi
-else
+elif [[ -z "${AWS_SESSION_TOKEN:-}" ]]; then
   # Static access keys must not be paired with a stale session token from `aws login`.
   unset AWS_SESSION_TOKEN AWS_CREDENTIAL_EXPIRATION
 fi

@@ -10,65 +10,90 @@ import { isValidDate, validateCreateInput, validateUpdateInput } from "../types/
 
 const router = Router();
 
-router.get("/", (req, res) => {
-  const { date } = req.query;
+router.get("/", async (req, res) => {
+  try {
+    const { date } = req.query;
 
-  if (date !== undefined) {
-    if (typeof date !== "string" || !isValidDate(date)) {
-      res.status(400).json({ error: "date query must be YYYY-MM-DD" });
+    if (date !== undefined) {
+      if (typeof date !== "string" || !isValidDate(date)) {
+        res.status(400).json({ error: "date query must be YYYY-MM-DD" });
+        return;
+      }
+      res.json(await listTodos(date));
       return;
     }
-    res.json(listTodos(date));
-    return;
-  }
 
-  res.json(listTodos());
+    res.json(await listTodos());
+  } catch (err) {
+    console.error("Failed to list todos:", err);
+    res.status(500).json({ error: "Failed to list todos" });
+  }
 });
 
-router.get("/:id", (req, res) => {
-  const todo = getTodo(req.params.id);
-  if (!todo) {
-    res.status(404).json({ error: "Todo not found" });
-    return;
+router.get("/:id", async (req, res) => {
+  try {
+    const todo = await getTodo(req.params.id);
+    if (!todo) {
+      res.status(404).json({ error: "Todo not found" });
+      return;
+    }
+    res.json(todo);
+  } catch (err) {
+    console.error("Failed to get todo:", err);
+    res.status(500).json({ error: "Failed to get todo" });
   }
-  res.json(todo);
 });
 
-router.post("/", (req, res) => {
-  const result = validateCreateInput(req.body);
-  if (!result.ok) {
-    res.status(400).json({ error: result.error });
-    return;
-  }
+router.post("/", async (req, res) => {
+  try {
+    const result = validateCreateInput(req.body);
+    if (!result.ok) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
 
-  const todo = createTodo(result.data);
-  res.status(201).json(todo);
+    const todo = await createTodo(result.data);
+    res.status(201).json(todo);
+  } catch (err) {
+    console.error("Failed to create todo:", err);
+    res.status(500).json({ error: "Failed to create todo" });
+  }
 });
 
-router.patch("/:id", (req, res) => {
-  const result = validateUpdateInput(req.body);
-  if (!result.ok) {
-    res.status(400).json({ error: result.error });
-    return;
-  }
+router.patch("/:id", async (req, res) => {
+  try {
+    const result = validateUpdateInput(req.body);
+    if (!result.ok) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
 
-  const todo = updateTodo(req.params.id, result.data);
-  if (!todo) {
-    res.status(404).json({ error: "Todo not found" });
-    return;
-  }
+    const todo = await updateTodo(req.params.id, result.data);
+    if (!todo) {
+      res.status(404).json({ error: "Todo not found" });
+      return;
+    }
 
-  res.json(todo);
+    res.json(todo);
+  } catch (err) {
+    console.error("Failed to update todo:", err);
+    res.status(500).json({ error: "Failed to update todo" });
+  }
 });
 
-router.delete("/:id", (req, res) => {
-  const deleted = deleteTodo(req.params.id);
-  if (!deleted) {
-    res.status(404).json({ error: "Todo not found" });
-    return;
-  }
+router.delete("/:id", async (req, res) => {
+  try {
+    const deleted = await deleteTodo(req.params.id);
+    if (!deleted) {
+      res.status(404).json({ error: "Todo not found" });
+      return;
+    }
 
-  res.status(204).send();
+    res.status(204).send();
+  } catch (err) {
+    console.error("Failed to delete todo:", err);
+    res.status(500).json({ error: "Failed to delete todo" });
+  }
 });
 
 export default router;

@@ -42,6 +42,10 @@ resource "aws_iam_user_policy_attachment" "github_actions" {
 
 resource "aws_iam_access_key" "github_actions" {
   user = aws_iam_user.github_actions.name
+
+  lifecycle {
+    ignore_changes = [status]
+  }
 }
 
 resource "aws_eks_access_entry" "github_actions" {

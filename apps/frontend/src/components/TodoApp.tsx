@@ -104,6 +104,22 @@ export function TodoApp() {
   }, [orderedScheduledItems]);
   const doneItems = useMemo(() => dayTodos.filter((todo) => todo.state === "done"), [dayTodos]);
 
+  const todoEmptyMessage = useMemo(() => {
+    if (todoItems.length > 0) {
+      return undefined;
+    }
+
+    if (scheduledItems.length === 0 && doneItems.length === 0) {
+      return "No todos for this day. Add one with +.";
+    }
+
+    if (scheduledItems.length === 0 && doneItems.length > 0) {
+      return "All done for this day!";
+    }
+
+    return undefined;
+  }, [todoItems.length, scheduledItems.length, doneItems.length]);
+
   const scheduledDates = useMemo(
     () =>
       allTodos
@@ -343,7 +359,7 @@ export function TodoApp() {
                     onSchedule={handleSchedule}
                     onDelete={handleDelete}
                     busy={busy}
-                    emptyMessage="No todos for this day. Add one with +."
+                    emptyMessage={todoEmptyMessage}
                   />
                 </section>
 

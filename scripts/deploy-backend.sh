@@ -18,6 +18,8 @@ AWS_REGION=$(jq -r '.aws_region.value' "${OUTPUTS_FILE}")
 CLUSTER_NAME=$(jq -r '.eks_cluster_name.value' "${OUTPUTS_FILE}")
 ECR_URL=$(jq -r '.ecr_repository_url.value' "${OUTPUTS_FILE}")
 CLOUDFRONT_URL=$(jq -r '.cloudfront_url.value' "${OUTPUTS_FILE}")
+TODOS_TABLE_NAME=$(jq -r '.todos_table_name.value' "${OUTPUTS_FILE}")
+BACKEND_IRSA_ROLE_ARN=$(jq -r '.backend_irsa_role_arn.value' "${OUTPUTS_FILE}")
 
 IMAGE_TAG="${IMAGE_TAG:-$(date +%Y%m%d%H%M%S)}"
 
@@ -35,7 +37,10 @@ echo "Deploying with Helm..."
 helm upgrade --install backend "${HELM_CHART}" \
   --set "image.repository=${ECR_URL}" \
   --set "image.tag=${IMAGE_TAG}" \
-  --set "cloudfrontUrl=${CLOUDFRONT_URL}"
+  --set "cloudfrontUrl=${CLOUDFRONT_URL}" \
+  --set "dynamodb.tableName=${TODOS_TABLE_NAME}" \
+  --set "aws.region=${AWS_REGION}" \
+  --set "serviceAccount.annotations.eks\.amazonaws\.com/role-arn=${BACKEND_IRSA_ROLE_ARN}"
 
 LB_HOSTNAME=$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
 

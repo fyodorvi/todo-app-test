@@ -9,6 +9,7 @@ module "eks" {
   subnet_ids = module.vpc.private_subnets
 
   cluster_endpoint_public_access = true
+  bootstrap_self_managed_addons    = false
 
   enable_cluster_creator_admin_permissions = true
 

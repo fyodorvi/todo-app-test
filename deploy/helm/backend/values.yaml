@@ -7,6 +7,17 @@ image:
 
 cloudfrontUrl: ""
 
+aws:
+  region: ap-southeast-2
+
+dynamodb:
+  tableName: rush-webapp-todos
+
+serviceAccount:
+  create: true
+  name: backend
+  annotations: {}
+
 service:
   type: LoadBalancer
   port: 80

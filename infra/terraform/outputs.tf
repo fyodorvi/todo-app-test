@@ -28,6 +28,16 @@ output "aws_region" {
   value       = var.aws_region
 }
 
+output "todos_table_name" {
+  description = "DynamoDB table name for todos"
+  value       = aws_dynamodb_table.todos.name
+}
+
+output "backend_irsa_role_arn" {
+  description = "IRSA role ARN for the backend service account"
+  value       = module.backend_irsa.iam_role_arn
+}
+
 output "github_actions_access_key_id" {
   description = "Access key ID for GitHub Actions (add as AWS_ACCESS_KEY_ID secret)"
   value       = aws_iam_access_key.github_actions.id

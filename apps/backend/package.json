@@ -8,6 +8,8 @@
     "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.758.0",
+    "@aws-sdk/lib-dynamodb": "^3.758.0",
     "cors": "^2.8.5",
     "express": "^4.21.2"
   },

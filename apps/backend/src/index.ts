@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import { isTodosTableReachable } from "./store/todos";
 import todosRouter from "./routes/todos";
 
 const app = express();
@@ -16,8 +17,14 @@ app.use(
 );
 app.use(express.json());
 
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
+app.get("/health", async (_req, res) => {
+  const dynamodb = await isTodosTableReachable();
+  if (!dynamodb) {
+    res.status(503).json({ status: "degraded", dynamodb: false });
+    return;
+  }
+
+  res.json({ status: "ok", dynamodb: true });
 });
 
 app.get("/api/hello", (_req, res) => {

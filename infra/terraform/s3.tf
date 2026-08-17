@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "frontend" {
-  bucket = "${local.name}-frontend-${data.aws_caller_identity.current.account_id}"
+  bucket        = "${local.name}-frontend-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
 
   tags = {
     Project = local.name
