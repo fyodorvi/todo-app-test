@@ -119,4 +119,9 @@ resource "aws_cloudfront_distribution" "frontend" {
   tags = {
     Project = local.name
   }
+
+  lifecycle {
+    # API origin is updated by deploy-backend.sh after the ALB is created.
+    ignore_changes = [origin, ordered_cache_behavior]
+  }
 }

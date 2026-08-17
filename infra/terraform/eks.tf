@@ -11,7 +11,37 @@ module "eks" {
   cluster_endpoint_public_access = true
   bootstrap_self_managed_addons    = false
 
-  enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = false
+
+  kms_key_administrators = [
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
+    aws_iam_user.github_actions.arn,
+  ]
+
+  access_entries = {
+    root = {
+      principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    github_actions = {
+      principal_arn = aws_iam_user.github_actions.arn
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
 
   eks_managed_node_groups = {
     default = {

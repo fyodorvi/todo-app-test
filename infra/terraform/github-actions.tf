@@ -47,19 +47,3 @@ resource "aws_iam_access_key" "github_actions" {
     ignore_changes = [status]
   }
 }
-
-resource "aws_eks_access_entry" "github_actions" {
-  cluster_name  = module.eks.cluster_name
-  principal_arn = aws_iam_user.github_actions.arn
-  type          = "STANDARD"
-}
-
-resource "aws_eks_access_policy_association" "github_actions_admin" {
-  cluster_name  = module.eks.cluster_name
-  principal_arn = aws_iam_user.github_actions.arn
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-
-  access_scope {
-    type = "cluster"
-  }
-}
