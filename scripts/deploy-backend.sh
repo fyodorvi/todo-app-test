@@ -66,7 +66,7 @@ api_origin_domain = "${LB_HOSTNAME}"
 EOF
 
 cd "${ROOT_DIR}/infra/terraform"
-terraform apply -auto-approve
+terraform apply -auto-approve -target=aws_cloudfront_distribution.frontend
 
 cd "${ROOT_DIR}"
 
